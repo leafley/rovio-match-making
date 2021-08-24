@@ -14,17 +14,22 @@ namespace Rovio.MatchMaking.Controllers
     public class TicketsController : ControllerBase
     {
         private readonly ILogger<TicketsController> _logger;
+        private readonly IActorRef _deliveryActor;
 
-        public TicketsController(ILogger<TicketsController> logger, ActorSystem actorSystem)
+        public TicketsController(ILogger<TicketsController> logger, IActorRef deliveryActor)
         {
             _logger = logger;
+            _deliveryActor = deliveryActor;
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody]Ticket ticket)
+        public IActionResult Post([FromBody]TicketRequest request)
         {
             var id = Guid.NewGuid();
-            return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{id}", new { Id = id, Game = ticket.Game });
+            var ticket = new Actors.MatchMakingActor.Ticket(request.GameId, request.Latency);
+            _deliveryActor.Tell(ticket);
+            
+            return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{id}", ticket);
         }
 
         [HttpDelete("{id}")]

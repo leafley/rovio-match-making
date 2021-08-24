@@ -6,7 +6,7 @@ Content-Type: application/json
 
 {
     "latency": {{$randomInt 1 999}},
-    "game": "{{$guid}}"
+    "gameId": "{{$guid}}"
 }
 
 ### Delete ticket

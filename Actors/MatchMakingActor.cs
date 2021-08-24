@@ -36,12 +36,14 @@ namespace Rovio.MatchMaking.Actors
         #region Commands
         public class Ticket
         {
-            public Guid Id { get; set; }
-            public double Latency { get; set; }
-            public long RegisteredAt { get; set; }
+            public Guid GameId { get; }
+            public Guid Id { get; }
+            public double Latency { get; }
+            public long RegisteredAt { get; }
 
-            public Ticket(double latency)
+            public Ticket(Guid gameId, double latency)
             {
+                GameId = gameId;
                 Id = Guid.NewGuid();
                 Latency = latency;
                 RegisteredAt = NodaTime.SystemClock.Instance.GetCurrentInstant().ToUnixTimeTicks();
