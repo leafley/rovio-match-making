@@ -13,6 +13,15 @@ namespace Rovio.MatchMaking.Actors
         public DeliveryActor()
         {
             Receive<MatchMakingActor.Ticket>(Handle);
+            Receive<MatchMakingActor.CancelTicket>(Handle);
+        }
+
+        private void Handle(MatchMakingActor.CancelTicket command)
+        {
+            if (_matchMakingLookup.TryGetValue(command.GameId, out IActorRef matchMakingActor))
+            {
+                matchMakingActor.Forward(command);
+            }
         }
 
         private void Handle(MatchMakingActor.Ticket command)

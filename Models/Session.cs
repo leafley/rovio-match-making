@@ -1,4 +1,4 @@
-namespace Rovio.MatchMaking.Model
+namespace Rovio.MatchMaking.Models
 {
     public class Session
     {

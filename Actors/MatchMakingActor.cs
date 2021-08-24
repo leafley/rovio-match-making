@@ -13,7 +13,7 @@ namespace Rovio.MatchMaking.Actors
         public MatchMakingActor()
         {
             Receive<Ticket>(Handle);
-            Receive<Guid>(Handle);
+            Receive<CancelTicket>(Handle);
         }
 
         #region Handlers
@@ -26,9 +26,9 @@ namespace Rovio.MatchMaking.Actors
             }
         }
 
-        private void Handle(Guid command)
+        private void Handle(CancelTicket command)
         {
-            _tickets.Remove(command);
+            _tickets.Remove(command.TicketId);
         }
 
         #endregion Handlers
@@ -48,6 +48,18 @@ namespace Rovio.MatchMaking.Actors
                 Latency = latency;
                 RegisteredAt = NodaTime.SystemClock.Instance.GetCurrentInstant().ToUnixTimeTicks();
             }
+        }
+
+        public class CancelTicket
+        {
+            public CancelTicket(Guid gameId, Guid ticketId)
+            {
+                GameId = gameId;
+                TicketId = ticketId;
+            }
+
+            public Guid GameId { get; }
+            public Guid TicketId { get; }
         }
         #endregion Commands
     }

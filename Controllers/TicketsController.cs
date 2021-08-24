@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Rovio.MatchMaking.Model;
+using Rovio.MatchMaking.Actors;
+using Rovio.MatchMaking.Models;
 
 namespace Rovio.MatchMaking.Controllers
 {
@@ -23,18 +24,18 @@ namespace Rovio.MatchMaking.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody]TicketRequest request)
+        public IActionResult Post([FromBody] TicketRequest request)
         {
-            var id = Guid.NewGuid();
-            var ticket = new Actors.MatchMakingActor.Ticket(request.GameId, request.Latency);
+            var ticket = new MatchMakingActor.Ticket(request.GameId, request.Latency);
             _deliveryActor.Tell(ticket);
-            
-            return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{id}", ticket);
+
+            return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{ticket.Id}", ticket);
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult Delete(Guid id)
+        [HttpDelete]
+        public IActionResult Delete([FromBody] TicketCancellation cancellation)
         {
+            _deliveryActor.Tell(new MatchMakingActor.CancelTicket(cancellation.GameId, cancellation.TicketId));
             return Accepted();
         }
     }
