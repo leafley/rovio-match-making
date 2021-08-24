@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Akka.Actor;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Rovio.MatchMaking.Model;
@@ -14,7 +15,7 @@ namespace Rovio.MatchMaking.Controllers
     {
         private readonly ILogger<TicketsController> _logger;
 
-        public TicketsController(ILogger<TicketsController> logger)
+        public TicketsController(ILogger<TicketsController> logger, ActorSystem actorSystem)
         {
             _logger = logger;
         }

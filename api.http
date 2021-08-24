@@ -1,0 +1,13 @@
+@api = https://localhost:5001
+
+### Add ticket
+POST {{api}}/tickets
+Content-Type: application/json
+
+{
+    "latency": {{$randomInt 1 999}},
+    "game": "{{$guid}}"
+}
+
+### Delete ticket
+DELETE {{api}}/tickets/{{$guid}} HTTP/1.1
