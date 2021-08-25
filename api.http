@@ -13,4 +13,9 @@ DELETE {{api}}/lobbies/a203d7fc-8684-446b-a511-8be6ba2e019e/tickets/16ad9ba2-8e9
 POST {{api}}/sessions HTTP/1.1
 Content-Type: application/json
 
-"a203d7fc-8684-446b-a511-8be6ba2e019e"
+{
+    "lobbyId": "a203d7fc-8684-446b-a511-8be6ba2e019e",
+    "minTickets": 5,
+    "maxTickets": 5,
+    "maxWaitSeconds": 360
+}

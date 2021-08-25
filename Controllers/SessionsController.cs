@@ -22,15 +22,17 @@ namespace Rovio.MatchMaking.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostAsync([FromBody]Guid game)
+        public async Task<IActionResult> PostAsync([FromBody] Models.Session session)
         {
-            var result = await _deliveryActor.Ask(new Actors.Lobby.CreateSession(game, 5, 5, NodaTime.Duration.FromSeconds(360).BclCompatibleTicks), TimeSpan.FromSeconds(60));
+            var result = await _deliveryActor.Ask(
+                new Actors.Lobby.CreateSession(
+                    session.LobbyId,
+                    session.MinTickets,
+                    session.MaxTickets,
+                    NodaTime.Duration.FromSeconds(session.MaxWaitSeconds).BclCompatibleTicks),
+                TimeSpan.FromSeconds(60));
 
-            return Ok(new
-            {
-                Game = game,
-                Tickets = result
-            });
+            return Ok(result);
         }
     }
 }
