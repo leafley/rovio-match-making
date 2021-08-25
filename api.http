@@ -1,19 +1,10 @@
 @api = https://localhost:5001
 
 ### Add ticket
-POST {{api}}/tickets
+POST {{api}}/games/a203d7fc-8684-446b-a511-8be6ba2e019e/tickets HTTP/1.1
 Content-Type: application/json
 
-{
-    "latency": {{$randomInt 1 999}},
-    "gameId": "a203d7fc-8684-446b-a511-8be6ba2e019e"
-}
+{{$randomInt 1 999}}
 
 ### Delete ticket
-DELETE {{api}}/tickets HTTP/1.1
-Content-Type: application/json
-
-{
-    "gameId": "a203d7fc-8684-446b-a511-8be6ba2e019e",
-    "ticketId": "2f380219-4dba-4dcb-944d-74fd811cc63b"
-}
+DELETE {{api}}/games/a203d7fc-8684-446b-a511-8be6ba2e019e/tickets/16ad9ba2-8e93-4308-a5c3-4d43fd7fcd3c HTTP/1.1

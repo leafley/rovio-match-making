@@ -12,30 +12,30 @@ namespace Rovio.MatchMaking.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class TicketsController : ControllerBase
+    public class GamesController : ControllerBase
     {
-        private readonly ILogger<TicketsController> _logger;
+        private readonly ILogger<GamesController> _logger;
         private readonly IActorRef _deliveryActor;
 
-        public TicketsController(ILogger<TicketsController> logger, IActorRef deliveryActor)
+        public GamesController(ILogger<GamesController> logger, IActorRef deliveryActor)
         {
             _logger = logger;
             _deliveryActor = deliveryActor;
         }
 
-        [HttpPost]
-        public IActionResult Post([FromBody] TicketRequest request)
+        [HttpPost("{id}/tickets")]
+        public IActionResult Post(Guid gameId, [FromBody] double latency)
         {
-            var ticket = new MatchMakingActor.Ticket(request.GameId, request.Latency);
+            var ticket = new MatchMakingActor.Ticket(gameId, latency);
             _deliveryActor.Tell(ticket);
 
             return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{ticket.Id}", ticket);
         }
 
-        [HttpDelete]
-        public IActionResult Delete([FromBody] TicketCancellation cancellation)
+        [HttpDelete("{gameId}/tickets/{ticketId}")]
+        public IActionResult Delete(Guid gameId, Guid ticketId)
         {
-            _deliveryActor.Tell(new MatchMakingActor.CancelTicket(cancellation.GameId, cancellation.TicketId));
+            _deliveryActor.Tell(new MatchMakingActor.CancelTicket(gameId, ticketId));
             return Accepted();
         }
     }
