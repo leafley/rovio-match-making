@@ -1,10 +1,16 @@
 @api = https://localhost:5001
 
 ### Add ticket
-POST {{api}}/games/a203d7fc-8684-446b-a511-8be6ba2e019e/tickets HTTP/1.1
+POST {{api}}/lobbies/a203d7fc-8684-446b-a511-8be6ba2e019e/tickets HTTP/1.1
 Content-Type: application/json
 
 {{$randomInt 1 999}}
 
 ### Delete ticket
-DELETE {{api}}/games/a203d7fc-8684-446b-a511-8be6ba2e019e/tickets/16ad9ba2-8e93-4308-a5c3-4d43fd7fcd3c HTTP/1.1
+DELETE {{api}}/lobbies/a203d7fc-8684-446b-a511-8be6ba2e019e/tickets/16ad9ba2-8e93-4308-a5c3-4d43fd7fcd3c HTTP/1.1
+
+### Create Session
+POST {{api}}/sessions HTTP/1.1
+Content-Type: application/json
+
+"a203d7fc-8684-446b-a511-8be6ba2e019e"

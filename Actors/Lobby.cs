@@ -12,11 +12,25 @@ namespace Rovio.MatchMaking.Actors
 
         public Lobby()
         {
-            Receive<Ticket>(Handle);
             Receive<CancelTicket>(Handle);
+            Receive<CreateSession>(Handle);
+            Receive<Ticket>(Handle);
         }
 
         #region Handlers
+
+        private void Handle(CreateSession command)
+        {
+            if (_tickets.Count < command.MinPlayerCount)
+            {
+                Context.Sender.Tell("test value", Self);
+            }
+        }
+
+        private void Handle(CancelTicket command)
+        {
+            _tickets.Remove(command.TicketId);
+        }
 
         private void Handle(Ticket command)
         {
@@ -24,11 +38,6 @@ namespace Rovio.MatchMaking.Actors
             {
                 _tickets[command.Id] = command;
             }
-        }
-
-        private void Handle(CancelTicket command)
-        {
-            _tickets.Remove(command.TicketId);
         }
 
         #endregion Handlers
@@ -63,7 +72,18 @@ namespace Rovio.MatchMaking.Actors
         }
 
         public class CreateSession
-        {}
+        {
+            public CreateSession(Guid gameId, uint minPlayerCount, uint maxPlayerCount)
+            {
+                GameId = gameId;
+                MinPlayerCount = minPlayerCount;
+                MaxPlayerCount = maxPlayerCount;
+            }
+
+            public Guid GameId { get; }
+            public uint MinPlayerCount { get; }
+            public uint MaxPlayerCount { get; }
+        }
         #endregion Commands
     }
 }

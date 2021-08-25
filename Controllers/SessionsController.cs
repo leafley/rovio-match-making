@@ -13,28 +13,23 @@ namespace Rovio.MatchMaking.Controllers
     public class SessionsController : ControllerBase
     {
         private readonly ILogger<SessionsController> _logger;
+        private readonly IActorRef _deliveryActor;
 
-        public SessionsController(ILogger<SessionsController> logger, ActorSystem actorSystem)
+        public SessionsController(ILogger<SessionsController> logger, IActorRef deliveryActor)
         {
             _logger = logger;
+            _deliveryActor = deliveryActor;
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody]Guid game)
+        public async Task<IActionResult> PostAsync([FromBody]Guid game)
         {
-            var r = new Random();
-            var userCount = r.Next(999);
+            var result = await _deliveryActor.Ask(new Actors.Lobby.CreateSession(game, 5, 5), TimeSpan.FromSeconds(60));
 
             return Ok(new
             {
                 Game = game,
-                Tickets = Enumerable.Range(0, userCount)
-                    .Select(n => new
-                    {
-                        Id = Guid.NewGuid(),
-                        Latency = r.NextDouble() * 1000,
-                        QueueTime = r.NextDouble() * 300
-                    })
+                Tickets = result
             });
         }
     }

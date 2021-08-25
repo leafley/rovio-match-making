@@ -12,21 +12,21 @@ namespace Rovio.MatchMaking.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class GamesController : ControllerBase
+    public class LobbiesController : ControllerBase
     {
-        private readonly ILogger<GamesController> _logger;
+        private readonly ILogger<LobbiesController> _logger;
         private readonly IActorRef _deliveryActor;
 
-        public GamesController(ILogger<GamesController> logger, IActorRef deliveryActor)
+        public LobbiesController(ILogger<LobbiesController> logger, IActorRef deliveryActor)
         {
             _logger = logger;
             _deliveryActor = deliveryActor;
         }
 
         [HttpPost("{id}/tickets")]
-        public IActionResult Post(Guid gameId, [FromBody] double latency)
+        public IActionResult Post(Guid id, [FromBody] double latency)
         {
-            var ticket = new Lobby.Ticket(gameId, latency);
+            var ticket = new Lobby.Ticket(id, latency);
             _deliveryActor.Tell(ticket);
 
             return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{ticket.Id}", ticket);
