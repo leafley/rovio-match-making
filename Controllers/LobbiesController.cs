@@ -38,5 +38,18 @@ namespace Rovio.MatchMaking.Controllers
             _deliveryActor.Tell(new Lobby.CancelTicket(gameId, ticketId));
             return Accepted();
         }
+
+        [HttpPost("{id}/bulk/{count}")]
+        public IActionResult Bulk(Guid id, int count)
+        {
+            var r = new Random();
+
+            for (int i = 0; i < count; i++)
+            {
+                _deliveryActor.Tell(new Lobby.Ticket(id, r.Next(1, 1000)));
+            }
+
+            return Ok();
+        }
     }
 }
