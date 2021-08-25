@@ -42,11 +42,11 @@ namespace Rovio.MatchMaking.Actors
                 n++;
                 delta1 = ticket.Latency - mean;
                 mean += delta1 / n;
-                delta2 = ticket.Latency - mean;
-                m2 += delta1 * delta2;
+                // delta2 = ticket.Latency - mean;
+                // m2 += delta1 * delta2;
             }
 
-            double variance = m2 / n;
+            // double variance = m2 / n;
 
             var now = NodaTime.SystemClock.Instance.GetCurrentInstant().ToUnixTimeTicks();
             double timeFactor = 1d / command.MaxWaitTime;
@@ -58,7 +58,7 @@ namespace Rovio.MatchMaking.Actors
                     GetAdjustedDeviation(y.Latency, mean, now - y.RegisteredAt, command.MaxWaitTime, timeFactor));
 
                 return result == 0
-                    ? x.Latency.CompareTo(y.Latency)
+                    ? Math.Abs(mean - x.Latency).CompareTo(Math.Abs(mean - y.Latency))
                     : result;
             });
 

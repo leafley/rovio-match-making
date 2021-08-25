@@ -19,7 +19,7 @@ namespace Rovio.MatchMaking.Actors
 
         private void Handle(Lobby.CreateSession command)
         {
-            if (_lobbyLookup.TryGetValue(command.GameId, out IActorRef lobbyActor))
+            if (_lobbyLookup.TryGetValue(command.LobbyId, out IActorRef lobbyActor))
             {
                 lobbyActor.Forward(command);
             }
