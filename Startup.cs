@@ -41,7 +41,7 @@ namespace Rovio.MatchMaking
             var config = ConfigurationFactory.ParseString(hocon);
             var actorSystem = ActorSystem.Create("match-making", config);
             services.AddSingleton(actorSystem);
-            services.AddSingleton(_ => actorSystem.ActorOf(Actors.DeliveryActor.Props(), "delivery"));
+            services.AddSingleton(_ => actorSystem.ActorOf(Actors.GameManager.Props(), "delivery"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

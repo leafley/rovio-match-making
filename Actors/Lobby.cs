@@ -4,13 +4,13 @@ using Akka.Actor;
 
 namespace Rovio.MatchMaking.Actors
 {
-    public class MatchMakingActor : ReceiveActor
+    public class Lobby : ReceiveActor
     {
-        public static Props Props() => Akka.Actor.Props.Create(() => new MatchMakingActor());
+        public static Props Props() => Akka.Actor.Props.Create(() => new Lobby());
 
         private Dictionary<Guid, Ticket> _tickets = new();
 
-        public MatchMakingActor()
+        public Lobby()
         {
             Receive<Ticket>(Handle);
             Receive<CancelTicket>(Handle);
@@ -61,6 +61,9 @@ namespace Rovio.MatchMaking.Actors
             public Guid GameId { get; }
             public Guid TicketId { get; }
         }
+
+        public class CreateSession
+        {}
         #endregion Commands
     }
 }

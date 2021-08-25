@@ -4,19 +4,19 @@ using Akka.Actor;
 
 namespace Rovio.MatchMaking.Actors
 {
-    public class DeliveryActor : ReceiveActor
+    public class GameManager : ReceiveActor
     {
-        public static Props Props() => Akka.Actor.Props.Create(() => new DeliveryActor());
+        public static Props Props() => Akka.Actor.Props.Create(() => new GameManager());
 
         public Dictionary<Guid, IActorRef> _matchMakingLookup = new();
 
-        public DeliveryActor()
+        public GameManager()
         {
-            Receive<MatchMakingActor.Ticket>(Handle);
-            Receive<MatchMakingActor.CancelTicket>(Handle);
+            Receive<Lobby.Ticket>(Handle);
+            Receive<Lobby.CancelTicket>(Handle);
         }
 
-        private void Handle(MatchMakingActor.CancelTicket command)
+        private void Handle(Lobby.CancelTicket command)
         {
             if (_matchMakingLookup.TryGetValue(command.GameId, out IActorRef matchMakingActor))
             {
@@ -24,11 +24,11 @@ namespace Rovio.MatchMaking.Actors
             }
         }
 
-        private void Handle(MatchMakingActor.Ticket command)
+        private void Handle(Lobby.Ticket command)
         {
             if (!_matchMakingLookup.TryGetValue(command.GameId, out IActorRef matchMakingActor))
             {
-                matchMakingActor = Context.ActorOf(MatchMakingActor.Props(), command.GameId.ToString());
+                matchMakingActor = Context.ActorOf(Lobby.Props(), command.GameId.ToString());
                 _matchMakingLookup.Add(command.GameId, matchMakingActor);
             }
             matchMakingActor.Forward(command);

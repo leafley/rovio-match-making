@@ -26,7 +26,7 @@ namespace Rovio.MatchMaking.Controllers
         [HttpPost("{id}/tickets")]
         public IActionResult Post(Guid gameId, [FromBody] double latency)
         {
-            var ticket = new MatchMakingActor.Ticket(gameId, latency);
+            var ticket = new Lobby.Ticket(gameId, latency);
             _deliveryActor.Tell(ticket);
 
             return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{ticket.Id}", ticket);
@@ -35,7 +35,7 @@ namespace Rovio.MatchMaking.Controllers
         [HttpDelete("{gameId}/tickets/{ticketId}")]
         public IActionResult Delete(Guid gameId, Guid ticketId)
         {
-            _deliveryActor.Tell(new MatchMakingActor.CancelTicket(gameId, ticketId));
+            _deliveryActor.Tell(new Lobby.CancelTicket(gameId, ticketId));
             return Accepted();
         }
     }
