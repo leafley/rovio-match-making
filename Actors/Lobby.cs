@@ -49,13 +49,13 @@ namespace Rovio.MatchMaking.Actors
             // double variance = m2 / n;
 
             var now = NodaTime.SystemClock.Instance.GetCurrentInstant().ToUnixTimeTicks();
-            double timeFactor = 1d / command.MaxWaitTime;
+            double degreesPerTick = 90d / command.MaxWaitTime;
 
             var tickets = _ticketLookup.Values.ToList();
             tickets.Sort((x, y) =>
             {
-                var result = GetAdjustedDeviation(x.Latency, mean, now - x.RegisteredAt, command.MaxWaitTime, timeFactor).CompareTo(
-                    GetAdjustedDeviation(y.Latency, mean, now - y.RegisteredAt, command.MaxWaitTime, timeFactor));
+                var result = GetAdjustedDeviation(x.Latency, mean, now - x.RegisteredAt, command.MaxWaitTime, degreesPerTick).CompareTo(
+                    GetAdjustedDeviation(y.Latency, mean, now - y.RegisteredAt, command.MaxWaitTime, degreesPerTick));
 
                 return result == 0
                     ? Math.Abs(mean - x.Latency).CompareTo(Math.Abs(mean - y.Latency))
@@ -86,7 +86,7 @@ namespace Rovio.MatchMaking.Actors
 
         #endregion Handlers
 
-        private double GetAdjustedDeviation(double latency, double mean, long waitTime, long maxWaitTime, double timeFactor)
+        private double GetAdjustedDeviation(double latency, double mean, long waitTime, long maxWaitTime, double degreesPerTick)
         {
             if (maxWaitTime <= waitTime)
             {
@@ -98,7 +98,7 @@ namespace Rovio.MatchMaking.Actors
             }
             else
             {
-                return Math.Abs(mean - latency) * timeFactor * (maxWaitTime - waitTime);
+                return Math.Abs(mean - latency) * Math.Cos(degreesPerTick * waitTime);
             }
         }
 
