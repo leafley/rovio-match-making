@@ -36,7 +36,7 @@ namespace Rovio.MatchMaking.Services
         }
         #endregion IHostedService
 
-        public async Task<List<Lobby.Ticket>> CreateSessionAsync(Models.Session session, TimeSpan timeOut)
+        public async Task<Lobby.Session> CreateSessionAsync(Models.Session session, TimeSpan timeOut)
         {
             if (session is null)
             {
@@ -47,7 +47,7 @@ namespace Rovio.MatchMaking.Services
 
             if (lobby == Akka.Actor.Nobody.Instance)
             {
-                return new();
+                return null;
             }
 
             var result = await lobby.Ask(
@@ -58,7 +58,7 @@ namespace Rovio.MatchMaking.Services
                     NodaTime.Duration.FromSeconds(session.MaxWaitSeconds).BclCompatibleTicks),
                 timeOut);
 
-            return result as List<Lobby.Ticket>;
+            return result as Lobby.Session;
         }
 
         public void DequeueTicket(Guid lobbyId, Guid ticketId)
@@ -121,7 +121,7 @@ namespace Rovio.MatchMaking.Services
                 return lobbyRef;
             }
 
-            return lobbyRef;
+            return lobbyRef ?? Akka.Actor.Nobody.Instance;
         }
     }
 }
