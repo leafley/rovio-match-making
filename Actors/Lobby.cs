@@ -42,33 +42,46 @@ namespace Rovio.MatchMaking.Actors
                 n++;
                 delta1 = ticket.Latency - mean;
                 mean += delta1 / n;
-                // delta2 = ticket.Latency - mean;
-                // m2 += delta1 * delta2;
+                delta2 = ticket.Latency - mean;
+                m2 += delta1 * delta2;
             }
 
-            // double variance = m2 / n;
+            double standardDeviation = Math.Sqrt(m2 / n);
 
             var now = NodaTime.SystemClock.Instance.GetCurrentInstant().ToUnixTimeTicks();
             double degreesPerTick = 90d / command.MaxWaitTime;
 
-            var tickets = _ticketLookup.Values.ToList();
+            var tickets = _ticketLookup.Values
+                .Select(n => new
+                {
+                    Ticket = n,
+                    AdjustedDeviation = GetAdjustedDeviation(
+                        n.Latency,
+                        mean,
+                        now - n.RegisteredAt,
+                        command.MaxWaitTime,
+                        degreesPerTick)
+                })
+                .Where(n => Math.Abs(mean - n.AdjustedDeviation) <= standardDeviation)
+                .ToList();
             tickets.Sort((x, y) =>
             {
-                var result = GetAdjustedDeviation(x.Latency, mean, now - x.RegisteredAt, command.MaxWaitTime, degreesPerTick).CompareTo(
-                    GetAdjustedDeviation(y.Latency, mean, now - y.RegisteredAt, command.MaxWaitTime, degreesPerTick));
+                var result = x.AdjustedDeviation.CompareTo(y.AdjustedDeviation);
 
                 return result == 0
-                    ? Math.Abs(mean - x.Latency).CompareTo(Math.Abs(mean - y.Latency))
+                    ? Math.Abs(mean - x.Ticket.Latency).CompareTo(Math.Abs(mean - y.Ticket.Latency))
                     : result;
             });
 
-            var session = new Session(command.LobbyId, tickets.GetRange(0, Math.Min(command.MaxPlayerCount, tickets.Count)));
-            foreach (var ticket in session.Tickets)
+            var sessionCount = Math.Min(command.MaxPlayerCount, tickets.Count);
+            var sessionTickets = new List<Ticket>(sessionCount);
+            for (int i = 0; i < sessionCount; i++)
             {
-                _ticketLookup.Remove(ticket.Id);
+                _ticketLookup.Remove(tickets[i].Ticket.Id, out Ticket ticket);
+                sessionTickets.Add(ticket);
             }
 
-            Sender.Tell(session, Self);
+            Sender.Tell(new Session(command.LobbyId, sessionTickets), Self);
         }
 
         private void Handle(CancelTicket command)
