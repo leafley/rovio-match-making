@@ -35,7 +35,8 @@ namespace Rovio.MatchMaking
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Rovio.MatchMaking", Version = "v1" });
             });
 
-            services.AddHostedService<Services.ActorService>();
+            services.AddSingleton<Services.ActorService>();
+            services.AddHostedService<Services.ActorService>(provider => provider.GetRequiredService<Services.ActorService>());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
