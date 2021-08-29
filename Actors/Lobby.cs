@@ -10,12 +10,16 @@ namespace Rovio.MatchMaking.Actors
         public static Props Props() => Akka.Actor.Props.Create(() => new Lobby());
 
         private Dictionary<Guid, Ticket> _ticketLookup = new();
+        private Dictionary<Guid, OpenSession> _openSessionsLookup = new();
 
         public Lobby()
         {
             Receive<CancelTicket>(Handle);
             Receive<CreateSession>(Handle);
+            Receive<OpenSession>(Handle);
             Receive<Ticket>(Handle);
+
+            Receive<Actors.Session.Close>(Handle);
         }
 
         #region Handlers
@@ -81,19 +85,69 @@ namespace Rovio.MatchMaking.Actors
                 sessionTickets.Add(ticket);
             }
 
-            Sender.Tell(new Session(command.LobbyId, sessionTickets), Self);
+            var session = new Session(command.LobbyId, sessionTickets);
+            Sender.Tell(session, Self);
+
+            if (sessionCount < command.MaxPlayerCount)
+            {
+                var sessionActor = Context.ActorOf(Actors.Session.Props(Self, command.LobbyId, session.SessionId, mean, standardDeviation, command.MaxPlayerCount - sessionCount));
+                var openSession = new OpenSession(
+                    session.SessionId,
+                    sessionActor,
+                    mean,
+                    standardDeviation);
+                _openSessionsLookup.Add(session.SessionId, openSession);
+            }
         }
 
         private void Handle(CancelTicket command)
         {
-            _ticketLookup.Remove(command.TicketId);
+            // If the ticket doesn't existing in the lobby it might be queued in an open session
+            if (!_ticketLookup.Remove(command.TicketId))
+            {
+                foreach (var child in Context.GetChildren())
+                {
+                    child.Forward(command);
+                }
+            }
         }
 
-        private void Handle(Ticket command)
+        private void Handle(Ticket ticket)
         {
-            if (!_ticketLookup.TryAdd(command.Id, command))
+            if (_ticketLookup.ContainsKey(ticket.Id))
             {
-                _ticketLookup[command.Id] = command;
+                _ticketLookup[ticket.Id] = ticket;
+            }
+            else
+            {
+                foreach (var session in _openSessionsLookup.Values)
+                {
+                    if (Math.Abs(session.MeanLatency - ticket.Latency) <= session.MeanLatency)
+                    {
+                        session.Actor.Tell(ticket);
+                        // Bail out if we find an open session that can handle the ticket
+                        return;
+                    }
+                }
+
+                // If we get here it means there are no open sessions that will take the ticket
+                _ticketLookup.Add(ticket.Id, ticket);
+            }
+        }
+
+        private void Handle(Actors.Session.Close command)
+        {
+            if (_openSessionsLookup.Remove(command.SessionId, out OpenSession openSession))
+            {
+                openSession.Actor.Tell(command, Self);
+            }
+        }
+
+        private void Handle(Lobby.OpenSession command)
+        {
+            if (!_openSessionsLookup.ContainsKey(command.SessionId))
+            {
+                _openSessionsLookup.Add(command.SessionId, command);
             }
         }
 
@@ -119,17 +173,18 @@ namespace Rovio.MatchMaking.Actors
         public class Session
         {
             public Guid LobbyId { get; }
+            public Guid SessionId { get; }
             public List<Ticket> Tickets { get; }
 
             public Session(Guid lobbyId)
+                : this(lobbyId, new())
             {
-                Tickets = new();
-                LobbyId = lobbyId;
             }
 
             public Session(Guid lobbyId, List<Ticket> tickets)
             {
                 LobbyId = lobbyId;
+                SessionId = Guid.NewGuid();
                 Tickets = tickets;
             }
         }
@@ -225,6 +280,39 @@ namespace Rovio.MatchMaking.Actors
             public int MinPlayerCount { get; }
             public int MaxPlayerCount { get; }
             public long MaxWaitTime { get; }
+        }
+
+        public class OpenSession
+        {
+            public Guid SessionId { get; }
+            public IActorRef Actor { get; }
+            public double MeanLatency { get; }
+            public double StandardDeviation { get; }
+
+            public OpenSession(Guid sessionId, IActorRef actor, double meanLatency, double standardDeviation)
+            {
+                if (sessionId == Guid.Empty)
+                {
+                    throw new ArgumentException("Invalid session ID", nameof(sessionId));
+                }
+                if (actor is null || actor == Akka.Actor.Nobody.Instance)
+                {
+                    throw new ArgumentException("Invalid session actor ref", nameof(actor));
+                }
+                if (meanLatency < 0)
+                {
+                    throw new ArgumentException("Mean latency must be positive", nameof(meanLatency));
+                }
+                if (standardDeviation < 0)
+                {
+                    throw new ArgumentException("Standard deviation must be positive", nameof(standardDeviation));
+                }
+
+                SessionId = sessionId;
+                Actor = actor;
+                MeanLatency = meanLatency;
+                StandardDeviation = standardDeviation;
+            }
         }
         #endregion Messages
     }

@@ -7,16 +7,37 @@ namespace Rovio.MatchMaking.Actors
 {
     public class Session : ReceiveActor
     {
-        public static Props Props(IActorRef lobby, Guid lobbyId, int spaceRemaining) => Akka.Actor.Props.Create(() => new Session(lobby, lobbyId, spaceRemaining));
+        public static Props Props(
+            IActorRef lobby,
+            Guid lobbyId,
+            Guid sessionId,
+            double meanLatency,
+            double standardDeviation,
+            int remainingSlots) =>
+            Akka.Actor.Props.Create(() => new Session(
+                lobby,
+                lobbyId,
+                sessionId,
+                meanLatency,
+                standardDeviation,
+                remainingSlots));
 
         private readonly Dictionary<Guid, Lobby.Ticket> _tickets;
         private readonly IActorRef _lobby;
         private readonly Guid _lobbyId;
-
+        private readonly Guid _sessionId;
+        private readonly double _meanLatency;
+        private readonly double _standardDeviation;
         private bool _safeToClose;
-        private int _spaceRemaining;
+        private int _remainingSlots;
 
-        public Session(IActorRef lobby, Guid lobbyId, int spaceRemaining)
+        public Session(
+            IActorRef lobby,
+            Guid lobbyId,
+            Guid sessionId,
+            double meanLatency,
+            double standardDeviation,
+            int remainingSlots)
         {
             if (lobby is null || lobby == Akka.Actor.Nobody.Instance)
             {
@@ -26,15 +47,14 @@ namespace Rovio.MatchMaking.Actors
             {
                 throw new ArgumentException("Invalid lobby ID", nameof(lobbyId));
             }
-            if (spaceRemaining < 1)
-            {
-                throw new ArgumentException("The session must have space remaining", nameof(spaceRemaining));
-            }
 
             _lobby = lobby;
             _lobbyId = lobbyId;
-            _spaceRemaining = spaceRemaining;
-            _tickets = new Dictionary<Guid, Lobby.Ticket>(_spaceRemaining);
+            _sessionId = sessionId;
+            _meanLatency = meanLatency;
+            _standardDeviation = standardDeviation;
+            _remainingSlots = remainingSlots;
+            _tickets = new Dictionary<Guid, Lobby.Ticket>(_remainingSlots);
 
             Running();
         }
@@ -42,7 +62,7 @@ namespace Rovio.MatchMaking.Actors
         private void IssueTickets()
         {
             Sender.Tell(new Lobby.Session(_lobbyId, _tickets.Values.ToList()), Self);
-            _spaceRemaining -= _tickets.Count;
+            _remainingSlots -= _tickets.Count;
             _tickets.Clear();
         }
 
@@ -60,35 +80,35 @@ namespace Rovio.MatchMaking.Actors
         // The session has space remaining and is accepting new tickets
         private void Running()
         {
-            Receive<AddTicket>(Handle);
+            Receive<Lobby.Ticket>(Handle);
             Receive<ClaimTickets>(_ =>
             {
                 IssueTickets();
 
                 // The session has been filled, shutting down
-                if (_spaceRemaining <= 0)
+                if (_remainingSlots <= 0)
                 {
-                    _lobby.Tell(Close.Instance, Self);
+                    _lobby.Tell(new Close(_sessionId), Self);
                     Become(Closing);
                 }
             });
             Receive<Close>(_ =>
             {
                 // Notify the lobby that the session is closing
-                _lobby.Tell(Close.Instance, Self);
+                _lobby.Tell(new Close(_sessionId), Self);
 
                 // Return session tickets to the lobby
                 ReturnTickets();
 
                 Become(Closing);
             });
-            Receive<RemoveTicket>(command => _tickets.Remove(command.TicketId));
+            Receive<Lobby.CancelTicket>(command => _tickets.Remove(command.TicketId));
         }
 
         // The session has no space remaining and is wait for the last tickets to be collected
         private void Filled()
         {
-            Receive<AddTicket>(command => _lobby.Forward(command.Ticket));
+            Receive<Lobby.Ticket>(ticket => _lobby.Forward(ticket));
             Receive<ClaimTickets>(_ =>
             {
                 IssueTickets();
@@ -110,19 +130,19 @@ namespace Rovio.MatchMaking.Actors
                 // Shutdown the session
                 else
                 {
-                    _lobby.Tell(Close.Instance, Self);
+                    _lobby.Tell(new Close(_sessionId), Self);
                     ReturnTickets();
                     Become(Closing);
                 }
             });
-            Receive<RemoveTicket>(command =>
+            Receive<Lobby.CancelTicket>(command =>
             {
                 _tickets.Remove(command.TicketId);
 
-                if (_spaceRemaining > _tickets.Count)
+                if (_remainingSlots > _tickets.Count)
                 {
                     _safeToClose = false;
-                    _lobby.Tell(Open.Instance, Self);
+                    _lobby.Tell(new Lobby.OpenSession(_sessionId, Self, _meanLatency, _standardDeviation), Self);
                     Become(Running);
                 }
             });
@@ -131,7 +151,7 @@ namespace Rovio.MatchMaking.Actors
         // The session is shutting down and will no longer service requests
         private void Closing()
         {
-            Receive<AddTicket>(command => _lobby.Forward(command.Ticket));
+            Receive<Lobby.Ticket>(ticket => _lobby.Forward(ticket));
             Receive<ClaimTickets>(command => Sender.Tell(new Lobby.Session(_lobbyId, new List<Lobby.Ticket>()), Self));
             Receive<Close>(_ => Self.Tell(PoisonPill.Instance, Self));
             // Receive<RemoveTicket>() Nothing to do
@@ -140,25 +160,25 @@ namespace Rovio.MatchMaking.Actors
 
         #region Handlers
 
-        private void Handle(AddTicket command)
+        private void Handle(Lobby.Ticket ticket)
         {
-            if (command is null)
+            if (ticket is null)
             {
-                throw new ArgumentNullException(nameof(command));
+                throw new ArgumentNullException(nameof(ticket));
             }
 
-            if (_tickets.ContainsKey(command.Ticket.Id))
+            if (_tickets.ContainsKey(ticket.Id))
             {
-                _tickets[command.Ticket.Id] = command.Ticket;
+                _tickets[ticket.Id] = ticket;
             }
             else
             {
-                _tickets.Add(command.Ticket.Id, command.Ticket);
+                _tickets.Add(ticket.Id, ticket);
             }
 
-            if (_spaceRemaining == _tickets.Count)
+            if (_remainingSlots == _tickets.Count)
             {
-                _lobby.Tell(Close.Instance, Self);
+                _lobby.Tell(new Close(_sessionId), Self);
                 Become(Filled);
             }
         }
@@ -166,16 +186,6 @@ namespace Rovio.MatchMaking.Actors
         #endregion Handlers
 
         #region Messages
-        public class AddTicket
-        {
-            public Lobby.Ticket Ticket { get; }
-
-            public AddTicket(Lobby.Ticket ticket)
-            {
-                this.Ticket = ticket ?? throw new ArgumentNullException(nameof(ticket));
-            }
-        }
-
         public class ClaimTickets
         {
             private ClaimTickets() { }
@@ -185,31 +195,12 @@ namespace Rovio.MatchMaking.Actors
 
         public class Close
         {
-            private Close() { }
-
-            public static Close Instance { get; } = new();
-        }
-
-        public class Open
-        {
-            private Open() { }
-
-            public static Open Instance { get; } = new();
-        }
-
-        public class RemoveTicket
-        {
-            public Guid TicketId { get; }
-
-            public RemoveTicket(Guid ticketId)
+            public Close(Guid sessionId)
             {
-                if (ticketId == Guid.Empty)
-                {
-                    throw new ArgumentException("Invalid ticket ID", nameof(ticketId));
-                }
-
-                TicketId = ticketId;
+                SessionId = sessionId;
             }
+
+            public Guid SessionId { get; }
         }
         #endregion Messages
     }
