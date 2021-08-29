@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Rovio.MatchMaking.Actors;
 using Rovio.MatchMaking.Models;
+using Rovio.MatchMaking.Services;
 
 namespace Rovio.MatchMaking.Controllers
 {
@@ -15,27 +16,34 @@ namespace Rovio.MatchMaking.Controllers
     public class LobbiesController : ControllerBase
     {
         private readonly ILogger<LobbiesController> _logger;
-        private readonly IActorRef _deliveryActor;
+        private readonly ActorService _actorService;
 
-        public LobbiesController(ILogger<LobbiesController> logger, IActorRef deliveryActor)
+        public LobbiesController(ILogger<LobbiesController> logger, ActorService actorService)
         {
+            _actorService = actorService;
             _logger = logger;
-            _deliveryActor = deliveryActor;
         }
 
         [HttpPost("{id}/tickets")]
         public IActionResult Post(Guid id, [FromBody] double latency)
         {
-            var ticket = new Lobby.Ticket(id, latency);
-            _deliveryActor.Tell(ticket);
+            var ticket = _actorService.QueueTicket(id, latency);
 
             return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{ticket.Id}", ticket);
         }
 
-        [HttpDelete("{gameId}/tickets/{ticketId}")]
-        public IActionResult Delete(Guid gameId, Guid ticketId)
+        [HttpPut("{lobbyId}/tickets/{ticketId}")]
+        public IActionResult Put(Guid lobbyId, Guid ticketId, [FromBody] double latency)
         {
-            _deliveryActor.Tell(new Lobby.CancelTicket(gameId, ticketId));
+            var ticket = _actorService.UpdateTicket(lobbyId, ticketId, latency);
+
+            return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{ticket.Id}", ticket);
+        }
+
+        [HttpDelete("{lobbyId}/tickets/{ticketId}")]
+        public IActionResult Delete(Guid lobbyId, Guid ticketId)
+        {
+            _actorService.DequeueTicket(lobbyId, ticketId);
             return Accepted();
         }
 
@@ -46,7 +54,7 @@ namespace Rovio.MatchMaking.Controllers
 
             for (int i = 0; i < count; i++)
             {
-                _deliveryActor.Tell(new Lobby.Ticket(id, r.Next(1, 1000)));
+                _actorService.QueueTicket(id, r.Next(1, 1000));
             }
 
             return Ok();

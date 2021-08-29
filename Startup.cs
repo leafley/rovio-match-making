@@ -35,13 +35,7 @@ namespace Rovio.MatchMaking
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Rovio.MatchMaking", Version = "v1" });
             });
 
-            var hocon = System.IO.File.Exists("akka.hocon")
-                ? System.IO.File.ReadAllText("akka.hocon")
-                : string.Empty;
-            var config = ConfigurationFactory.ParseString(hocon);
-            var actorSystem = ActorSystem.Create("match-making", config);
-            services.AddSingleton(actorSystem);
-            services.AddSingleton(_ => actorSystem.ActorOf(Actors.LobbyManager.Props(), "delivery"));
+            services.AddHostedService<Services.ActorService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
