@@ -193,7 +193,7 @@ namespace Rovio.MatchMaking.Actors
                 {
                     throw new ArgumentException("The minimum player count must be greater than 0", nameof(minPlayerCount));
                 }
-                if (maxPlayerCount > minPlayerCount)
+                if (maxPlayerCount < minPlayerCount)
                 {
                     throw new ArgumentException("The maximum player count cannot be less than the minimum player count", nameof(maxPlayerCount));
                 }
