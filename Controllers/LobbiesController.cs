@@ -53,19 +53,5 @@ namespace Rovio.MatchMaking.Controllers
             var result = await _actorService.CreateSessionAsync(session, TimeSpan.FromSeconds(60));
             return Ok(result);
         }
-
-        //------------------ These endpoints are for testing and convenience only -----------------------------
-        [HttpPost("{id}/bulk/{count}")]
-        public IActionResult Bulk(Guid id, int count)
-        {
-            var r = new Random();
-
-            for (int i = 0; i < count; i++)
-            {
-                _actorService.QueueTicket(id, r.Next(1, 1000));
-            }
-
-            return Ok();
-        }
     }
 }
