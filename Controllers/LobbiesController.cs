@@ -24,10 +24,10 @@ namespace Rovio.MatchMaking.Controllers
             _logger = logger;
         }
 
-        [HttpPost("{id}/tickets")]
-        public IActionResult Post(Guid id, [FromBody] double latency)
+        [HttpPost("{lobbyId}/tickets")]
+        public IActionResult Post(Guid lobbyId, [FromBody] double latency)
         {
-            var ticket = _actorService.QueueTicket(id, latency);
+            var ticket = _actorService.QueueTicket(lobbyId, latency);
 
             return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{ticket.Id}", ticket);
         }
@@ -47,6 +47,14 @@ namespace Rovio.MatchMaking.Controllers
             return Accepted();
         }
 
+        [HttpPost("{lobbyId}/sessions")]
+        public async Task<IActionResult> PostSessionAsync(Guid lobbyId, [FromBody] Models.Session session)
+        {
+            var result = await _actorService.CreateSessionAsync(session, TimeSpan.FromSeconds(60));
+            return Ok(result);
+        }
+
+        //------------------ These endpoints are for testing and convenience only -----------------------------
         [HttpPost("{id}/bulk/{count}")]
         public IActionResult Bulk(Guid id, int count)
         {
