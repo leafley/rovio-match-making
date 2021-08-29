@@ -9,9 +9,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net5.0/Rovio.MatchMaking.dll",
+            "program": "${workspaceFolder}/Rovio.MatchMaking/bin/Debug/net5.0/Rovio.MatchMaking.dll",
             "args": [],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/Rovio.MatchMaking",
             "stopAtEntry": false,
             // "serverReadyAction": {
             //     "action": "openExternally",
@@ -21,7 +21,7 @@
                 "ASPNETCORE_ENVIRONMENT": "Development"
             },
             "sourceFileMap": {
-                "/Views": "${workspaceFolder}/Views"
+                "/Views": "${workspaceFolder}/Rovio.MatchMaking/Views"
             }
         },
         {
