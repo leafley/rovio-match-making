@@ -27,7 +27,7 @@ namespace Rovio.MatchMaking.Actors
 
         private void Handle(Lobby.CancelTicket command)
         {
-            if (_lobbyLookup.TryGetValue(command.GameId, out IActorRef lobbyActor))
+            if (_lobbyLookup.TryGetValue(command.LobbyId, out IActorRef lobbyActor))
             {
                 lobbyActor.Forward(command);
             }
@@ -35,10 +35,10 @@ namespace Rovio.MatchMaking.Actors
 
         private void Handle(Lobby.Ticket command)
         {
-            if (!_lobbyLookup.TryGetValue(command.GameId, out IActorRef lobbyActor))
+            if (!_lobbyLookup.TryGetValue(command.LobbyId, out IActorRef lobbyActor))
             {
-                lobbyActor = Context.ActorOf(Lobby.Props(), command.GameId.ToString());
-                _lobbyLookup.Add(command.GameId, lobbyActor);
+                lobbyActor = Context.ActorOf(Lobby.Props(), command.LobbyId.ToString());
+                _lobbyLookup.Add(command.LobbyId, lobbyActor);
             }
             lobbyActor.Forward(command);
         }

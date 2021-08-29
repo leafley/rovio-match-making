@@ -123,29 +123,61 @@ namespace Rovio.MatchMaking.Actors
 
         public class Ticket
         {
-            public Guid GameId { get; }
+            public Guid LobbyId { get; }
             public Guid Id { get; }
             public double Latency { get; }
             public long RegisteredAt { get; }
 
-            public Ticket(Guid gameId, double latency)
+            public Ticket(Guid lobbyId, double latency)
+                : this(lobbyId, Guid.NewGuid(), latency)
             {
-                GameId = gameId;
-                Id = Guid.NewGuid();
+            }
+
+            public Ticket(Guid lobbyId, Guid ticketId, double latency)
+                : this()
+            {
+                if (lobbyId == Guid.Empty)
+                {
+                    throw new ArgumentException("Invalid lobby ID", nameof(lobbyId));
+                }
+                if (ticketId == Guid.Empty)
+                {
+                    throw new ArgumentException("Invalid ticket ID", nameof(ticketId));
+                }
+                if (latency < 0)
+                {
+                    throw new ArgumentException("Latency cannot be less than zero", nameof(latency));
+                }
+
+                LobbyId = lobbyId;
+                Id = ticketId;
                 Latency = latency;
+            }
+
+            private Ticket()
+            {
                 RegisteredAt = NodaTime.SystemClock.Instance.GetCurrentInstant().ToUnixTimeTicks();
             }
         }
 
         public class CancelTicket
         {
-            public CancelTicket(Guid gameId, Guid ticketId)
+            public CancelTicket(Guid lobbyId, Guid ticketId)
             {
-                GameId = gameId;
+                if (lobbyId == Guid.Empty)
+                {
+                    throw new ArgumentException("Invalid lobby ID", nameof(lobbyId));
+                }
+                if (ticketId == Guid.Empty)
+                {
+                    throw new ArgumentException("Invalid ticket ID", nameof(ticketId));
+                }
+
+                LobbyId = lobbyId;
                 TicketId = ticketId;
             }
 
-            public Guid GameId { get; }
+            public Guid LobbyId { get; }
             public Guid TicketId { get; }
         }
 
@@ -153,6 +185,23 @@ namespace Rovio.MatchMaking.Actors
         {
             public CreateSession(Guid lobbyId, int minPlayerCount, int maxPlayerCount, long maxWaitTime)
             {
+                if (lobbyId == Guid.Empty)
+                {
+                    throw new ArgumentException("Invalid lobby ID", nameof(lobbyId));
+                }
+                if (minPlayerCount < 1)
+                {
+                    throw new ArgumentException("The minimum player count must be greater than 0", nameof(minPlayerCount));
+                }
+                if (maxPlayerCount > minPlayerCount)
+                {
+                    throw new ArgumentException("The maximum player count cannot be less than the minimum player count", nameof(maxPlayerCount));
+                }
+                if (maxWaitTime < 0)
+                {
+                    throw new ArgumentException("The maximum wait time cannot be less than 0", nameof(maxWaitTime));
+                }
+
                 LobbyId = lobbyId;
                 MinPlayerCount = minPlayerCount;
                 MaxPlayerCount = maxPlayerCount;
