@@ -79,9 +79,10 @@ namespace Rovio.MatchMaking.Actors
 
                 // Return session tickets to the lobby
                 ReturnTickets();
-                
+
                 Become(Closing);
             });
+            Receive<RemoveTicket>(command => _tickets.Remove(command.TicketId));
         }
 
         // The session has no space remaining and is wait for the last tickets to be collected
@@ -114,6 +115,17 @@ namespace Rovio.MatchMaking.Actors
                     Become(Closing);
                 }
             });
+            Receive<RemoveTicket>(command =>
+            {
+                _tickets.Remove(command.TicketId);
+
+                if (_spaceRemaining > _tickets.Count)
+                {
+                    _safeToClose = false;
+                    _lobby.Tell(Open.Instance, Self);
+                    Become(Running);
+                }
+            });
         }
 
         // The session is shutting down and will no longer service requests
@@ -122,6 +134,7 @@ namespace Rovio.MatchMaking.Actors
             Receive<AddTicket>(command => _lobby.Forward(command.Ticket));
             Receive<ClaimTickets>(command => Sender.Tell(new Lobby.Session(_lobbyId, new List<Lobby.Ticket>()), Self));
             Receive<Close>(_ => Self.Tell(PoisonPill.Instance, Self));
+            // Receive<RemoveTicket>() Nothing to do
         }
         #endregion States
 
@@ -175,6 +188,28 @@ namespace Rovio.MatchMaking.Actors
             private Close() { }
 
             public static Close Instance { get; } = new();
+        }
+
+        public class Open
+        {
+            private Open() { }
+
+            public static Open Instance { get; } = new();
+        }
+
+        public class RemoveTicket
+        {
+            public Guid TicketId { get; }
+
+            public RemoveTicket(Guid ticketId)
+            {
+                if (ticketId == Guid.Empty)
+                {
+                    throw new ArgumentException("Invalid ticket ID", nameof(ticketId));
+                }
+
+                TicketId = ticketId;
+            }
         }
         #endregion Messages
     }
