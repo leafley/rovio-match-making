@@ -103,15 +103,25 @@ namespace Rovio.MatchMaking.Services
 
         private IActorRef GetLobbyRef(Guid lobbyId, bool createIfNotExists = false)
         {
-            if (!_lobbyLookup.TryGetValue(lobbyId, out IActorRef lobby) &&
+            // If the lobby doesn't exist or if the existing actor ref has died
+            if ((!_lobbyLookup.TryGetValue(lobbyId, out IActorRef lobbyRef) || lobbyRef == Akka.Actor.Nobody.Instance) &&
                 createIfNotExists)
             {
-                lobby = _system.ActorOf(Lobby.Props(), lobbyId.ToString());
-                _lobbyLookup.Add(lobbyId, lobby);
-                return lobby;
+                lobbyRef = _system.ActorOf(Lobby.Props(), lobbyId.ToString());
+                // Overwrite the dead actor ref
+                if (_lobbyLookup.ContainsKey(lobbyId))
+                {
+                    _lobbyLookup[lobbyId] = lobbyRef;
+                }
+                // Add the new actor ref
+                else
+                {
+                    _lobbyLookup.Add(lobbyId, lobbyRef);
+                }
+                return lobbyRef;
             }
 
-            return lobby;
+            return lobbyRef;
         }
     }
 }
