@@ -25,3 +25,7 @@ Content-Type: application/json
     "maxTickets": 50,
     "maxWaitSeconds": 360
 }
+
+### Delete Session
+DELETE {{api}}/lobbies/a203d7fc-8684-446b-a511-8be6ba2e019e/sessions/ea52a8dc-49fb-41cb-aa76-da60e0fc132d HTTP/1.1
+Content-Type: application/json
