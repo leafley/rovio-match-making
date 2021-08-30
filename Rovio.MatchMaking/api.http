@@ -26,6 +26,10 @@ Content-Type: application/json
     "maxWaitSeconds": 360
 }
 
+### Get Session
+GET {{api}}/lobbies/a203d7fc-8684-446b-a511-8be6ba2e019e/sessions/3b4b02d7-0f67-4dbf-ac64-bc57d19e3659 HTTP/1.1
+Content-Type: application/json
+
 ### Delete Session
 DELETE {{api}}/lobbies/a203d7fc-8684-446b-a511-8be6ba2e019e/sessions/ea52a8dc-49fb-41cb-aa76-da60e0fc132d HTTP/1.1
 Content-Type: application/json
