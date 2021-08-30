@@ -47,6 +47,18 @@ namespace Rovio.MatchMaking.Actors
             {
                 throw new ArgumentException("Invalid lobby ID", nameof(lobbyId));
             }
+            if (meanLatency < 0)
+            {
+                throw new ArgumentException("The mean latency must be positive", nameof(meanLatency));
+            }
+            if (standardDeviation < 0)
+            {
+                throw new ArgumentException("The standard deviation must be positive", nameof(standardDeviation));
+            }
+            if (remainingSlots <= 0)
+            {
+                throw new ArgumentException("Cannot create an open session with no remaining slots", nameof(remainingSlots));
+            }
 
             _lobby = lobby;
             _lobbyId = lobbyId;
