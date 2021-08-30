@@ -90,7 +90,9 @@ namespace Rovio.MatchMaking.Actors
 
             if (sessionCount < command.MaxPlayerCount)
             {
-                var sessionActor = Context.ActorOf(Actors.Session.Props(Self, command.LobbyId, session.SessionId, mean, standardDeviation, command.MaxPlayerCount - sessionCount));
+                var sessionActor = Context.ActorOf(
+                    Actors.Session.Props(Self, command.LobbyId, session.SessionId, mean, standardDeviation, command.MaxPlayerCount - sessionCount),
+                    session.SessionId.ToString());
                 var openSession = new OpenSession(
                     session.SessionId,
                     sessionActor,
