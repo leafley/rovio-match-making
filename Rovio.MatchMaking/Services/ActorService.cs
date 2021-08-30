@@ -66,6 +66,15 @@ namespace Rovio.MatchMaking.Services
             var lobby = GetLobbyRef(lobbyId);
         }
 
+        public async Task<Lobby.Session> GetSessionTicketsAsync(Guid lobbyId, Guid sessionId)
+        {
+            var session = _system.ActorSelection($"user/{lobbyId}/{sessionId}");
+
+            var result = await session.Ask(Session.ClaimTickets.Instance);
+
+            return result as Lobby.Session;
+        }
+
         public Lobby.Ticket QueueTicket(Guid lobbyId, double latency)
         {
             var ticket = new Lobby.Ticket(lobbyId, latency);

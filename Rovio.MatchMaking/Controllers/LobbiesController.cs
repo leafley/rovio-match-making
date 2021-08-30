@@ -47,10 +47,18 @@ namespace Rovio.MatchMaking.Controllers
             return Accepted();
         }
 
+        // TODO: clean up the model
         [HttpPost("{lobbyId}/sessions")]
         public async Task<IActionResult> PostSessionAsync(Guid lobbyId, [FromBody] Models.Session session)
         {
             var result = await _actorService.CreateSessionAsync(session, TimeSpan.FromSeconds(60));
+            return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{result.SessionId}", result);
+        }
+
+        [HttpGet("{lobbyId}/sessions/{sessionId}")]
+        public async Task<IActionResult> GetSessionAsync(Guid lobbyId, Guid sessionId)
+        {
+            var result = await _actorService.GetSessionTicketsAsync(lobbyId, sessionId);
             return Ok(result);
         }
     }
