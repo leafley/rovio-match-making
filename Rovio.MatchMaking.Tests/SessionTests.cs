@@ -1,3 +1,4 @@
+using Akka.Actor;
 using Akka.TestKit.Xunit;
 using Rovio.MatchMaking.Actors;
 using System;
@@ -174,5 +175,88 @@ namespace Rovio.MatchMaking.Tests
             Assert.Empty(session.Tickets);
         }
         #endregion Session.ClaimTickets
+
+
+        #region Session.Close
+        [Fact]
+        public void FilledSession_ShutdownAfterClaim()
+        {
+            //Given
+            var lobbyProbe = CreateTestProbe();
+            var deathWatch = CreateTestProbe();
+            var lobbyId = Guid.NewGuid();
+            var sessionId = Guid.NewGuid();
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            deathWatch.Watch(subject);
+
+            //When
+            subject.Tell(new Lobby.Ticket(lobbyId, 100), lobbyProbe);
+            // The lobby needs to acknowledge the close sent by the session
+            subject.Tell(new Session.Close(sessionId), lobbyProbe);
+            subject.Tell(Session.ClaimTickets.Instance, TestActor);
+
+            //Then
+            var msg = deathWatch.ExpectMsg<Terminated>(TimeSpan.FromSeconds(3));
+            Assert.Equal(subject, msg.ActorRef);
+        }
+
+        [Fact]
+        public void FilledSession_WaitForFinalClaim()
+        {
+            //Given
+            var lobbyProbe = CreateTestProbe();
+            var deathWatch = CreateTestProbe();
+            var lobbyId = Guid.NewGuid();
+            var sessionId = Guid.NewGuid();
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            deathWatch.Watch(subject);
+
+            //When
+            subject.Tell(new Lobby.Ticket(lobbyId, 100), lobbyProbe);
+            // The lobby needs to acknowledge the close sent by the session
+            subject.Tell(new Session.Close(sessionId), lobbyProbe);
+
+            //Then
+            deathWatch.ExpectNoMsg(TimeSpan.FromSeconds(3));
+        }
+
+        [Fact]
+        public void ClosingSession_WaitForLobbyToAcknowledge()
+        {
+            //Given
+            var lobbyProbe = CreateTestProbe();
+            var deathWatch = CreateTestProbe();
+            var lobbyId = Guid.NewGuid();
+            var sessionId = Guid.NewGuid();
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            deathWatch.Watch(subject);
+
+            //When
+            subject.Tell(new Session.Close(sessionId), TestActor);
+
+            //Then
+            deathWatch.ExpectNoMsg(TimeSpan.FromSeconds(3));
+        }
+
+        [Fact]
+        public void ClosingSession_ShutdownOnLobbyAcknowledge()
+        {
+            //Given
+            var lobbyProbe = CreateTestProbe();
+            var deathWatch = CreateTestProbe();
+            var lobbyId = Guid.NewGuid();
+            var sessionId = Guid.NewGuid();
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            deathWatch.Watch(subject);
+
+            //When
+            subject.Tell(new Session.Close(sessionId), TestActor);
+            subject.Tell(new Session.Close(sessionId), lobbyProbe);
+
+            //Then
+            var msg = deathWatch.ExpectMsg<Terminated>(TimeSpan.FromSeconds(3));
+            Assert.Equal(subject, msg.ActorRef);
+        }
+        #endregion Session.Close
     }
 }
