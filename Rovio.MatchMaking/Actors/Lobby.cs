@@ -105,9 +105,9 @@ namespace Rovio.MatchMaking.Actors
             // If the ticket doesn't existing in the lobby it might be queued in an open session
             if (!_ticketLookup.Remove(command.TicketId))
             {
-                foreach (var session in _openSessionsLookup.Values)
+                foreach (var session in Context.GetChildren())
                 {
-                    session.Actor.Forward(command);
+                    session.Forward(command);
                 }
             }
         }

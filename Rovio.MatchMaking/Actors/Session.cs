@@ -166,7 +166,6 @@ namespace Rovio.MatchMaking.Actors
             Receive<Lobby.Ticket>(ticket => _lobby.Forward(ticket));
             Receive<ClaimTickets>(command => Sender.Tell(new Lobby.Session(_lobbyId, new List<Lobby.Ticket>()), Self));
             Receive<Close>(_ => Self.Tell(PoisonPill.Instance, Self));
-            // Receive<RemoveTicket>() Nothing to do
         }
         #endregion States
 
