@@ -36,6 +36,12 @@ namespace Rovio.MatchMaking.Services
         }
         #endregion IHostedService
 
+        public void CloseSession(Guid lobbyId, Guid sessionId)
+        {
+            var session = _system.ActorSelection($"user/{lobbyId}/{sessionId}");
+            session.Tell(new Session.Close(sessionId));
+        }
+
         public async Task<Lobby.Session> CreateSessionAsync(Models.Session session, TimeSpan timeOut)
         {
             if (session is null)

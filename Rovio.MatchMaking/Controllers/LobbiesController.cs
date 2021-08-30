@@ -61,5 +61,12 @@ namespace Rovio.MatchMaking.Controllers
             var result = await _actorService.GetSessionTicketsAsync(lobbyId, sessionId);
             return Ok(result);
         }
+
+        [HttpDelete("{lobbyId}/sessions/{sessionId}")]
+        public IActionResult DeleteSession(Guid lobbyId, Guid sessionId)
+        {
+            _actorService.CloseSession(lobbyId, sessionId);
+            return Accepted();
+        }
     }
 }
