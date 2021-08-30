@@ -42,14 +42,26 @@ namespace Rovio.MatchMaking.Services
             session.Tell(new Session.Close(sessionId));
         }
 
-        public async Task<Lobby.Session> CreateSessionAsync(Models.Session session, TimeSpan timeOut)
+        public async Task<Lobby.Session> CreateSessionAsync(Guid lobbyId, int minTickets, int maxTickets, int maxWaitSeconds, TimeSpan timeOut)
         {
-            if (session is null)
+            if (lobbyId == Guid.Empty)
             {
-                throw new ArgumentNullException(nameof(session));
+                throw new ArgumentException("The lobby ID is invalid", nameof(lobbyId));
+            }
+            if (minTickets < 1)
+            {
+                throw new ArgumentException("The minimum session size be greater than 0", nameof(minTickets));
+            }
+            if (maxTickets < minTickets)
+            {
+                throw new ArgumentException("The session maximum tickets cannot be less than the minimum tickets", nameof(maxTickets));
+            }
+            if (maxWaitSeconds < 0)
+            {
+                throw new ArgumentException("The maximum wait time for the lobby must be positive", nameof(maxWaitSeconds));
             }
 
-            var lobby = GetLobbyRef(session.LobbyId);
+            var lobby = GetLobbyRef(lobbyId);
 
             if (lobby == Akka.Actor.Nobody.Instance)
             {
@@ -58,10 +70,10 @@ namespace Rovio.MatchMaking.Services
 
             var result = await lobby.Ask(
                 new Lobby.CreateSession(
-                    session.LobbyId,
-                    session.MinTickets,
-                    session.MaxTickets,
-                    NodaTime.Duration.FromSeconds(session.MaxWaitSeconds).BclCompatibleTicks),
+                    lobbyId,
+                    minTickets,
+                    maxTickets,
+                    NodaTime.Duration.FromSeconds(maxWaitSeconds).BclCompatibleTicks),
                 timeOut);
 
             return result as Lobby.Session;

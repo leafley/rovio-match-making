@@ -51,7 +51,12 @@ namespace Rovio.MatchMaking.Controllers
         [HttpPost("{lobbyId}/sessions")]
         public async Task<IActionResult> PostSessionAsync(Guid lobbyId, [FromBody] Models.Session session)
         {
-            var result = await _actorService.CreateSessionAsync(session, TimeSpan.FromSeconds(60));
+            var result = await _actorService.CreateSessionAsync(
+                lobbyId,
+                session.MinTickets,
+                session.MaxTickets,
+                session.MaxWaitSeconds,
+                TimeSpan.FromSeconds(60));
             return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{result.SessionId}", result);
         }
 
