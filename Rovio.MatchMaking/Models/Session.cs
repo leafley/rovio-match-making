@@ -7,5 +7,6 @@ namespace Rovio.MatchMaking.Models
         public int MinTickets { get; set; }
         public int MaxTickets { get; set; }
         public int MaxWaitSeconds { get; set; }
+        public int HeartbeatSeconds { get; set; }
     }
 }

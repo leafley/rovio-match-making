@@ -56,6 +56,7 @@ namespace Rovio.MatchMaking.Controllers
                 session.MinTickets,
                 session.MaxTickets,
                 session.MaxWaitSeconds,
+                session.HeartbeatSeconds,
                 TimeSpan.FromSeconds(60));
             return Created($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.Value}{HttpContext.Request.Path}/{result.SessionId}", result);
         }

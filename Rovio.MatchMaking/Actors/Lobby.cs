@@ -91,7 +91,14 @@ namespace Rovio.MatchMaking.Actors
             if (sessionCount < command.MaxPlayerCount)
             {
                 var sessionActor = Context.ActorOf(
-                    Actors.Session.Props(Self, command.LobbyId, session.SessionId, mean, standardDeviation, command.MaxPlayerCount - sessionCount),
+                    Actors.Session.Props(
+                        Self,
+                        command.LobbyId,
+                        session.SessionId,
+                        mean,
+                        standardDeviation,
+                        command.MaxPlayerCount - sessionCount,
+                        command.Heartbeat),
                     session.SessionId.ToString());
                 var openSession = new OpenSession(
                     session.SessionId,
@@ -251,7 +258,12 @@ namespace Rovio.MatchMaking.Actors
 
         public class CreateSession
         {
-            public CreateSession(Guid lobbyId, int minPlayerCount, int maxPlayerCount, long maxWaitTime)
+            public CreateSession(
+                Guid lobbyId,
+                int minPlayerCount,
+                int maxPlayerCount,
+                long maxWaitTime,
+                TimeSpan heartbeat)
             {
                 if (lobbyId == Guid.Empty)
                 {
@@ -274,12 +286,14 @@ namespace Rovio.MatchMaking.Actors
                 MinPlayerCount = minPlayerCount;
                 MaxPlayerCount = maxPlayerCount;
                 MaxWaitTime = maxWaitTime;
+                Heartbeat = heartbeat;
             }
 
             public Guid LobbyId { get; }
             public int MinPlayerCount { get; }
             public int MaxPlayerCount { get; }
             public long MaxWaitTime { get; }
+            public TimeSpan Heartbeat { get; }
         }
 
         public class OpenSession

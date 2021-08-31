@@ -23,7 +23,8 @@ Content-Type: application/json
     "lobbyId": "a203d7fc-8684-446b-a511-8be6ba2e019e",
     "minTickets": 1,
     "maxTickets": 50,
-    "maxWaitSeconds": 360
+    "maxWaitSeconds": 360,
+    "heartbeatSeconds": 360
 }
 
 ### Get Session

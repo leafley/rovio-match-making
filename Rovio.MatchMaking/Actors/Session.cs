@@ -13,14 +13,16 @@ namespace Rovio.MatchMaking.Actors
             Guid sessionId,
             double meanLatency,
             double standardDeviation,
-            int remainingSlots) =>
+            int remainingSlots,
+            TimeSpan heartbeat) =>
             Akka.Actor.Props.Create(() => new Session(
                 lobby,
                 lobbyId,
                 sessionId,
                 meanLatency,
                 standardDeviation,
-                remainingSlots));
+                remainingSlots,
+                heartbeat));
 
         private readonly Dictionary<Guid, Lobby.Ticket> _tickets;
         private readonly IActorRef _lobby;
@@ -37,7 +39,8 @@ namespace Rovio.MatchMaking.Actors
             Guid sessionId,
             double meanLatency,
             double standardDeviation,
-            int remainingSlots)
+            int remainingSlots,
+            TimeSpan heartbeat)
         {
             if (lobby is null || lobby == Akka.Actor.Nobody.Instance)
             {
@@ -68,6 +71,8 @@ namespace Rovio.MatchMaking.Actors
             _remainingSlots = remainingSlots;
             _tickets = new Dictionary<Guid, Lobby.Ticket>(_remainingSlots);
 
+            Context.SetReceiveTimeout(heartbeat);
+
             Running();
         }
 
@@ -92,6 +97,7 @@ namespace Rovio.MatchMaking.Actors
         // The session has space remaining and is accepting new tickets
         private void Running()
         {
+            Receive<ReceiveTimeout>(_ => Become(Closing));
             Receive<Lobby.Ticket>(Handle);
             Receive<ClaimTickets>(_ =>
             {
@@ -120,6 +126,7 @@ namespace Rovio.MatchMaking.Actors
         // The session has no space remaining and is wait for the last tickets to be collected
         private void Filled()
         {
+            Receive<ReceiveTimeout>(_ => Become(Closing));
             Receive<Lobby.Ticket>(ticket => _lobby.Forward(ticket));
             Receive<ClaimTickets>(_ =>
             {

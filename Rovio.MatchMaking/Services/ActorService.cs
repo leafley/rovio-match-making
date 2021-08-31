@@ -42,7 +42,7 @@ namespace Rovio.MatchMaking.Services
             session.Tell(new Session.Close(sessionId));
         }
 
-        public async Task<Lobby.Session> CreateSessionAsync(Guid lobbyId, int minTickets, int maxTickets, int maxWaitSeconds, TimeSpan timeOut)
+        public async Task<Lobby.Session> CreateSessionAsync(Guid lobbyId, int minTickets, int maxTickets, int maxWaitSeconds, int heartbeatSeconds, TimeSpan timeOut)
         {
             if (lobbyId == Guid.Empty)
             {
@@ -58,7 +58,11 @@ namespace Rovio.MatchMaking.Services
             }
             if (maxWaitSeconds < 0)
             {
-                throw new ArgumentException("The maximum wait time for the lobby must be positive", nameof(maxWaitSeconds));
+                throw new ArgumentException("The maximum wait time for the session must be positive", nameof(maxWaitSeconds));
+            }
+            if (heartbeatSeconds < 0)
+            {
+                throw new ArgumentException("The heartbeat for the session must be positive", nameof(maxWaitSeconds));
             }
 
             var lobby = GetLobbyRef(lobbyId);
@@ -73,7 +77,8 @@ namespace Rovio.MatchMaking.Services
                     lobbyId,
                     minTickets,
                     maxTickets,
-                    NodaTime.Duration.FromSeconds(maxWaitSeconds).BclCompatibleTicks),
+                    NodaTime.Duration.FromSeconds(maxWaitSeconds).BclCompatibleTicks,
+                    TimeSpan.FromSeconds(heartbeatSeconds)),
                 timeOut);
 
             return result as Lobby.Session;
