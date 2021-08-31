@@ -53,7 +53,7 @@ namespace Rovio.MatchMaking.Actors
             double standardDeviation = Math.Sqrt(m2 / n);
 
             var now = NodaTime.SystemClock.Instance.GetCurrentInstant().ToUnixTimeTicks();
-            double degreesPerTick = 90d / command.MaxWaitTime;
+            double radiansPerTick = Math.PI / (2 * command.MaxWaitTime);
 
             var tickets = _ticketLookup.Values
                 .Select(n => new
@@ -64,7 +64,7 @@ namespace Rovio.MatchMaking.Actors
                         mean,
                         now - n.RegisteredAt,
                         command.MaxWaitTime,
-                        degreesPerTick)
+                        radiansPerTick)
                 })
                 .Where(n => Math.Abs(mean - n.AdjustedDeviation) <= standardDeviation)
                 .ToList();
@@ -153,7 +153,7 @@ namespace Rovio.MatchMaking.Actors
 
         #endregion Handlers
 
-        private double GetAdjustedDeviation(double latency, double mean, long waitTime, long maxWaitTime, double degreesPerTick)
+        private double GetAdjustedDeviation(double latency, double mean, long waitTime, long maxWaitTime, double radiansPerTick)
         {
             if (maxWaitTime <= waitTime)
             {
@@ -165,7 +165,7 @@ namespace Rovio.MatchMaking.Actors
             }
             else
             {
-                return Math.Abs(mean - latency) * Math.Cos(degreesPerTick * waitTime);
+                return Math.Abs(mean - latency) * Math.Cos(radiansPerTick * waitTime);
             }
         }
 
