@@ -15,7 +15,7 @@ namespace Rovio.MatchMaking.Tests
             var lobbyProbe = CreateTestProbe();
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1, TimeSpan.FromSeconds(100)));
 
             subject.Tell(new Lobby.Ticket(lobbyId, 100), lobbyProbe);
             lobbyProbe.ExpectMsg<Session.Close>(TimeSpan.FromSeconds(3));
@@ -28,7 +28,7 @@ namespace Rovio.MatchMaking.Tests
             lobbyProbe.IgnoreMessages(message => message is Session.Close);
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1, TimeSpan.FromSeconds(100)));
 
             // Fill the session
             subject.Tell(new Lobby.Ticket(lobbyId, 100), lobbyProbe);
@@ -44,7 +44,7 @@ namespace Rovio.MatchMaking.Tests
             var lobbyProbe = CreateTestProbe();
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 10));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 10, TimeSpan.FromSeconds(100)));
 
             subject.Tell(new Session.Close(sessionId), TestActor);
 
@@ -58,7 +58,7 @@ namespace Rovio.MatchMaking.Tests
             lobbyProbe.IgnoreMessages(message => message is Session.Close);
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 10));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 10, TimeSpan.FromSeconds(100)));
 
             subject.Tell(new Lobby.Ticket(lobbyId, 100), lobbyProbe);
             subject.Tell(new Session.Close(sessionId), TestActor);
@@ -73,7 +73,7 @@ namespace Rovio.MatchMaking.Tests
             lobbyProbe.IgnoreMessages(message => message is Session.Close);
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1, TimeSpan.FromSeconds(100)));
 
             subject.Tell(new Lobby.Ticket(lobbyId, 100), lobbyProbe);
             subject.Tell(new Session.Close(sessionId), TestActor);
@@ -87,7 +87,7 @@ namespace Rovio.MatchMaking.Tests
             lobbyProbe.IgnoreMessages(message => message is Session.Close);
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1, TimeSpan.FromSeconds(100)));
 
             subject.Tell(new Session.Close(sessionId), TestActor);
             subject.Tell(new Lobby.Ticket(lobbyId, 100), lobbyProbe);
@@ -104,7 +104,7 @@ namespace Rovio.MatchMaking.Tests
             var lobbyProbe = CreateTestProbe();
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 10));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 10, TimeSpan.FromSeconds(100)));
 
             for (int i = 0; i < ticketCount; i++)
             {
@@ -124,7 +124,7 @@ namespace Rovio.MatchMaking.Tests
             lobbyProbe.IgnoreMessages(message => !(message is Session.Close));
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 2));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 2, TimeSpan.FromSeconds(100)));
 
             subject.Tell(new Lobby.Ticket(lobbyId, 100), lobbyProbe);
             subject.Tell(Session.ClaimTickets.Instance, TestActor);
@@ -142,7 +142,7 @@ namespace Rovio.MatchMaking.Tests
             var lobbyProbe = CreateTestProbe();
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, ticketCount));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, ticketCount, TimeSpan.FromSeconds(100)));
 
             //When
             for (int i = 0; i < ticketCount; i++)
@@ -163,7 +163,7 @@ namespace Rovio.MatchMaking.Tests
             var lobbyProbe = CreateTestProbe();
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 10));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 10, TimeSpan.FromSeconds(100)));
 
             //When
             subject.Tell(new Lobby.Ticket(lobbyId, 100), lobbyProbe);
@@ -186,7 +186,7 @@ namespace Rovio.MatchMaking.Tests
             var deathWatch = CreateTestProbe();
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1, TimeSpan.FromSeconds(100)));
             deathWatch.Watch(subject);
 
             //When
@@ -208,7 +208,7 @@ namespace Rovio.MatchMaking.Tests
             var deathWatch = CreateTestProbe();
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1, TimeSpan.FromSeconds(100)));
             deathWatch.Watch(subject);
 
             //When
@@ -228,7 +228,7 @@ namespace Rovio.MatchMaking.Tests
             var deathWatch = CreateTestProbe();
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1, TimeSpan.FromSeconds(100)));
             deathWatch.Watch(subject);
 
             //When
@@ -246,7 +246,7 @@ namespace Rovio.MatchMaking.Tests
             var deathWatch = CreateTestProbe();
             var lobbyId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
-            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1));
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1, TimeSpan.FromSeconds(100)));
             deathWatch.Watch(subject);
 
             //When
@@ -258,5 +258,20 @@ namespace Rovio.MatchMaking.Tests
             Assert.Equal(subject, msg.ActorRef);
         }
         #endregion Session.Close
+
+        [Fact]
+        public void RunningSession_SessionClosedDueToTimeout()
+        {
+            //Given
+            var lobbyProbe = CreateTestProbe();
+            var lobbyId = Guid.NewGuid();
+            var sessionId = Guid.NewGuid();
+            var subject = Sys.ActorOf(Session.Props(lobbyProbe, lobbyId, sessionId, 100, 20, 1, TimeSpan.FromSeconds(10)));
+
+            //When
+
+            //Then
+            var msg = lobbyProbe.ExpectMsg<Session.Close>(TimeSpan.FromSeconds(30));
+        }
     }
 }

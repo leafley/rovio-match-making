@@ -97,7 +97,7 @@ namespace Rovio.MatchMaking.Actors
         // The session has space remaining and is accepting new tickets
         private void Running()
         {
-            Receive<ReceiveTimeout>(_ => Become(Closing));
+            Receive<ReceiveTimeout>(Handle);
             Receive<Lobby.Ticket>(Handle);
             Receive<ClaimTickets>(_ =>
             {
@@ -126,7 +126,7 @@ namespace Rovio.MatchMaking.Actors
         // The session has no space remaining and is wait for the last tickets to be collected
         private void Filled()
         {
-            Receive<ReceiveTimeout>(_ => Become(Closing));
+            Receive<ReceiveTimeout>(Handle);
             Receive<Lobby.Ticket>(ticket => _lobby.Forward(ticket));
             Receive<ClaimTickets>(_ =>
             {
@@ -177,6 +177,13 @@ namespace Rovio.MatchMaking.Actors
         #endregion States
 
         #region Handlers
+
+        private void Handle(ReceiveTimeout _)
+        {
+            _lobby.Tell(new Close(_sessionId), Self);
+            ReturnTickets();
+            Become(Closing);
+        }
 
         private void Handle(Lobby.Ticket ticket)
         {
